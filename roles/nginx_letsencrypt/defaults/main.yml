@@ -1,0 +1,18 @@
+--- # roles/nginx_letsencrypt/defaults/main.yml
+
+nginx_container_name: "nginx"
+letsencrypt_container_name: "cerbot"
+nginx_container_image: "docker.io/nginx:stable"
+letsencrypt_container_image: "docker.io/certbot/certbot:latest"
+nginx_http_port: "8080"
+nginx_https_port: "8443"
+
+nginx_rootdir: "/tmp/nginx"
+nginx_webroot: "/usr/share/nginx/html"
+nginx_confdir: "/etc/nginx/conf.d"
+
+letsencrypt_rootdir: "/tmp/letsencrypt"
+letsencrypt_confdir: "/etc/letsencrypt"
+letsencrypt_statedir: "/var/lib/letsencrypt"
+
+podman_network_name: "podman"

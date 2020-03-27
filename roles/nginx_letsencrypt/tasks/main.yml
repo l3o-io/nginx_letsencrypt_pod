@@ -1,0 +1,105 @@
+--- # roles/nginx_letsencrypt/tasks/main.yml
+
+- name: ensure host volume directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ nginx_webroot_volume_host_path }}"
+    - "{{ nginx_confdir_volume_host_path }}"
+    - "{{ letsencrypt_confdir_volume_host_path }}"
+    - "{{ letsencrypt_statedir_volume_host_path }}"
+
+- name: ensure webroot directories for each domain exist
+  file:
+    path: "{{ nginx_webroot_volume_host_path }}/{{ item }}"
+    state: directory
+  with_items: "{{ nginx_domains }}"
+
+- name: copy static configuration files
+  copy:
+    src: "config/"
+    dest: "{{ nginx_confdir_volume_host_path }}/"
+
+- name: copy static site files
+  copy:
+    src: "site/"
+    dest: "{{ nginx_webroot_volume_host_path }}/"
+
+- name: create configuration file for each domain
+  template:
+    src: "config/domain.conf.j2"
+    dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
+  with_items: "{{ nginx_domains }}"
+
+- name: create initial index.html file for each domain
+  template:
+    src: "site/index.html.j2"
+    dest: "{{ nginx_webroot_volume_host_path }}/{{ item }}/index.html"
+  with_items: "{{ nginx_domains }}"
+
+- name: create nginx container
+  vars:
+    container_name: "{{ nginx_container_name }}"
+    container_state: running
+    container_image: "{{ nginx_container_image }}"
+    container_run_args: >-
+      --rm
+      --network "{{ podman_network_name }}"
+      -v "{{ nginx_confdir_volume_host_path }}:/etc/nginx/conf.d:ro"
+      -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
+      -p "{{ nginx_http_port }}:80"
+      -p "{{ nginx_https_port}}:443"
+  include_role:
+    name: podman_container_systemd
+
+- name: check whether letsencrypt account is already registered
+  stat:
+    path: "{{ letsencrypt_confdir_volume_host_path }}/accounts"
+  register: letsencyrpt_accounts
+
+- name: register letsencrypt account in certbot container
+  vars:
+    container_name: "{{ letsencrypt_container_name }}_register"
+    container_state: running
+    container_image: "{{ letsencrypt_container_image }}"
+    container_run_args: >-
+      --rm
+      --network "{{ podman_network_name }}"
+      -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
+      -v "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
+      -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
+    container_cmd_args: >-
+      register
+      -m "{{ letsencrypt_camail }}"
+      --agree-tos
+      --non-interactive
+  include_role:
+    name: podman_container_systemd
+  when: not letsencyrpt_accounts.stat.exists
+
+- name: create letsencrypt certbot container
+  vars:
+    container_name: "{{ letsencrypt_container_name }}"
+    container_state: running
+    container_image: "{{ letsencrypt_container_image }}"
+    container_run_args: >-
+      --rm
+      --network "{{ podman_network_name }}"
+      -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
+      -v "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
+      -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
+    container_cmd_args: >-
+      certonly
+      --webroot
+      {% for domain in nginx_domains %}
+      --webroot-path=/usr/share/nginx/html/{{ domain }}
+      -d "{{ domain }}"
+      {% endfor %}
+      -m "{{ letsencrypt_camail }}"
+      --agree-tos
+      --non-interactive
+      --staging
+      --dry-run
+  include_role:
+    name: podman_container_systemd
