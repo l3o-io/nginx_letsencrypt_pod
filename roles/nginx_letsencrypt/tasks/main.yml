@@ -65,6 +65,11 @@
   include_role:
     name: podman_container_systemd
 
+- name: restart nginx container (service)
+  service:
+    name: "{{ nginx_service_name }}"
+    state: restarted
+
 - name: check whether letsencrypt account is already registered
   stat:
     path: "{{ letsencrypt_confdir_volume_host_path }}/accounts"
@@ -90,31 +95,24 @@
     name: podman_container_systemd
   when: not letsencyrpt_accounts.stat.exists
 
-- name: create letsencrypt certbot container
-  vars:
-    container_name: "{{ letsencrypt_container_name }}"
-    container_state: running
-    container_image: "{{ letsencrypt_container_image }}"
-    container_run_args: >-
-      --rm
+- name: create or renew certificate using certbot container
+  command:
+    cmd: >-
+      podman run
       --network "{{ podman_network_name }}"
       -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
       -v "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
       -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
-    container_cmd_args: >-
+      {{ letsencrypt_container_image }}
       certonly
       --webroot
-      {% for domain in letsencrypt_domains %}
-      --webroot-path=/usr/share/nginx/html/{{ domain }}
-      -d "{{ domain }}"
-      {% endfor %}
+      --webroot-path=/usr/share/nginx/html/{{ item }}
+      -d "{{ item }}"
       -m "{{ letsencrypt_camail }}"
       --agree-tos
       --non-interactive
       --keep-until-expiring
-  include_role:
-    name: podman_container_systemd
-  # TODO: just one domain per certificate
+  with_items: "{{ letsencrypt_domains }}"
 
 - block:
   - name: stat ssl certificates (2nd round - post creation)
@@ -132,9 +130,7 @@
       src: "config/domain.conf.j2"
       dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
     with_items: "{{ nginx_domains }}"
-    register: nginx_configs
   - name: restart nginx container (service)
     service:
-      name: nginx_service_name
-      state: reloaded
-    when: nginx_configs.changed
+      name: "{{ nginx_service_name }}"
+      state: restarted
