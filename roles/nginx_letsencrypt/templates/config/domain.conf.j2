@@ -8,5 +8,24 @@ server {
 		root /usr/share/nginx/html/{{ item }};
 	}
 
+    {% if not ssl_cert_exists[item] %}
+	root /usr/share/nginx/html/{{ item }};
+	{% else %}
+	location / {
+		return 301 https://$host$request_uri;
+	}
+	{% endif %}
+}
+
+{% if ssl_cert_exists[item] %}
+server {
+	listen 443 ssl;
+	listen [::]:443;
+	server_name {{ item }};
+
+	ssl_certificate {{ letsencrypt_confdir }}/live/{{ item }}/fullchain.pem;
+	ssl_certificate_key {{ letsencrypt_confdir }}/live/{{ item }}/privkey.pem;
+
 	root /usr/share/nginx/html/{{ item }};
 }
+{% endif %}

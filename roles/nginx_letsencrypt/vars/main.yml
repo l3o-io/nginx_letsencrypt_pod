@@ -4,3 +4,5 @@ nginx_webroot_volume_host_path: "{{ nginx_rootdir }}{{ nginx_webroot }}"
 nginx_confdir_volume_host_path: "{{ nginx_rootdir }}{{ nginx_confdir }}"
 letsencrypt_confdir_volume_host_path: "{{ letsencrypt_rootdir }}{{ letsencrypt_confdir }}"
 letsencrypt_statedir_volume_host_path: "{{ letsencrypt_rootdir }}{{ letsencrypt_statedir }}"
+
+nginx_service_name: "{{ nginx_container_name }}-container-pod.service"

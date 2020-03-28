@@ -26,11 +26,22 @@
     src: "site/"
     dest: "{{ nginx_webroot_volume_host_path }}/"
 
-- name: create configuration file for each domain
-  template:
-    src: "config/domain.conf.j2"
-    dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
-  with_items: "{{ nginx_domains }}"
+- block:
+  - name: stat ssl certificates
+    stat:
+      path: "{{ letsencrypt_confdir_volume_host_path }}/live/{{ item }}"
+    register: ssl_stats
+    with_items: "{{ nginx_domains }}"
+  - set_fact:
+      ssl_cert_exists: "{{ ssl_cert_exists | default({}) | combine({item.item: item.stat.exists}) }}"
+    with_items: "{{ ssl_stats['results'] }}"
+  - debug:
+      msg: "ssl_cert_exists content: {{ ssl_cert_exists }}"
+  - name: create configuration file for each domain
+    template:
+      src: "config/domain.conf.j2"
+      dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
+    with_items: "{{ nginx_domains }}"
 
 - name: create initial index.html file for each domain
   template:
@@ -48,6 +59,7 @@
       --network "{{ podman_network_name }}"
       -v "{{ nginx_confdir_volume_host_path }}:/etc/nginx/conf.d:ro"
       -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
+      -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt:ro"
       -p "{{ nginx_http_port }}:80"
       -p "{{ nginx_https_port}}:443"
   include_role:
@@ -92,14 +104,37 @@
     container_cmd_args: >-
       certonly
       --webroot
-      {% for domain in nginx_domains %}
+      {% for domain in letsencrypt_domains %}
       --webroot-path=/usr/share/nginx/html/{{ domain }}
       -d "{{ domain }}"
       {% endfor %}
       -m "{{ letsencrypt_camail }}"
       --agree-tos
       --non-interactive
-      --staging
-      --dry-run
+      --keep-until-expiring
   include_role:
     name: podman_container_systemd
+  # TODO: just one domain per certificate
+
+- block:
+  - name: stat ssl certificates (2nd round - post creation)
+    stat:
+      path: "{{ letsencrypt_confdir_volume_host_path }}/live/{{ item }}"
+    register: ssl_stats
+    with_items: "{{ nginx_domains }}"
+  - set_fact:
+      ssl_cert_exists: "{{ ssl_cert_exists | default({}) | combine({item.item: item.stat.exists}) }}"
+    with_items: "{{ ssl_stats['results'] }}"
+  - debug:
+      msg: "ssl_cert_exists content: {{ ssl_cert_exists }}"
+  - name: create configuration file for each domain (2nd round - post creation)
+    template:
+      src: "config/domain.conf.j2"
+      dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
+    with_items: "{{ nginx_domains }}"
+    register: nginx_configs
+  - name: restart nginx container (service)
+    service:
+      name: nginx_service_name
+      state: reloaded
+    when: nginx_configs.changed
