@@ -65,17 +65,11 @@
   include_role:
     name: podman_container_systemd
 
-- name: restart nginx container (service)
-  service:
-    name: "{{ nginx_service_name }}"
-    state: restarted
-  register: result
-  until: result.changed
-  retries: 3
-  delay: 1
-
 - name: wait for nginx to start
   wait_for: "port={{ nginx_http_port }} host=localhost delay=2 state=present timeout=60"
+
+- name: reload nginx config
+  command: "podman exec {{ nginx_container_name }} nginx -s reload"
 
 - name: check whether letsencrypt account is already registered
   stat:
@@ -137,13 +131,5 @@
       src: "config/domain.conf.j2"
       dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
     with_items: "{{ nginx_domains }}"
-  - name: restart nginx container (service)
-    service:
-      name: "{{ nginx_service_name }}"
-      state: restarted
-    register: result
-    until: result.changed
-    retries: 3
-    delay: 1
-  - name: wait for nginx to start
-    wait_for: "port={{ nginx_http_port }} host=localhost delay=2 state=present timeout=60"
+  - name: reload nginx config
+    command: "podman exec {{ nginx_container_name }} nginx -s reload"
