@@ -69,6 +69,10 @@
   service:
     name: "{{ nginx_service_name }}"
     state: restarted
+  register: result
+  until: result.changed
+  retries: 3
+  delay: 1
 
 - name: check whether letsencrypt account is already registered
   stat:
@@ -134,3 +138,7 @@
     service:
       name: "{{ nginx_service_name }}"
       state: restarted
+    register: result
+    until: result.changed
+    retries: 3
+    delay: 1
