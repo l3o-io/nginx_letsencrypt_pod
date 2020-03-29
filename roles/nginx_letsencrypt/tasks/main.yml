@@ -67,9 +67,11 @@
 
 - name: wait for nginx to start
   wait_for: "port={{ nginx_http_port }} host=localhost delay=2 state=present timeout=60"
+  when: container_state is not defined
 
 - name: reload nginx config
   command: "podman exec {{ nginx_container_name }} nginx -s reload"
+  when: container_state is not defined
 
 - name: check whether letsencrypt account is already registered
   stat:
@@ -114,6 +116,7 @@
       --non-interactive
       --keep-until-expiring
   with_items: "{{ letsencrypt_domains }}"
+  when: container_state is not defined
 
 - block:
   - name: stat ssl certificates (2nd round - post creation)
@@ -133,3 +136,4 @@
     with_items: "{{ nginx_domains }}"
   - name: reload nginx config
     command: "podman exec {{ nginx_container_name }} nginx -s reload"
+    when: container_state is not defined
