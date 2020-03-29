@@ -74,6 +74,9 @@
   retries: 3
   delay: 1
 
+- name: wait for nginx to start
+  wait_for: "port={{ nginx_http_port }} host=localhost delay=2 state=present timeout=60"
+
 - name: check whether letsencrypt account is already registered
   stat:
     path: "{{ letsencrypt_confdir_volume_host_path }}/accounts"
@@ -142,3 +145,5 @@
     until: result.changed
     retries: 3
     delay: 1
+  - name: wait for nginx to start
+    wait_for: "port={{ nginx_http_port }} host=localhost delay=2 state=present timeout=60"
