@@ -2,7 +2,7 @@
 
 nginx_container_name: "nginx"
 letsencrypt_container_name: "cerbot"
-nginx_container_image: "docker.io/nginx:stable"
+nginx_container_image: "localhost:5000/nginx:stable-www-data"
 letsencrypt_container_image: "docker.io/certbot/certbot:latest"
 nginx_http_port: "8080"
 nginx_https_port: "8443"
