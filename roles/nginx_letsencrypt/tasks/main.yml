@@ -62,6 +62,9 @@
       -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt:ro"
       -p "{{ nginx_http_port }}:80"
       -p "{{ nginx_https_port}}:443"
+    container_firewall_ports:
+      - "{{ nginx_http_port }}/tcp"
+      - "{{ nginx_https_port}}/tcp"
   include_role:
     name: podman_container_systemd
 
