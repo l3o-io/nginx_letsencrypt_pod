@@ -118,7 +118,7 @@
       --agree-tos
       --non-interactive
       --keep-until-expiring
-  with_items: "{{ letsencrypt_domains }}"
+  with_items: "{{ letsencrypt_domains | default([]) }}"
   when: container_state is not defined
 
 - block:
