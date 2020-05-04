@@ -105,6 +105,7 @@
   command:
     cmd: >-
       podman run
+      --rm
       --network "{{ podman_network_name }}"
       -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
       -v "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
