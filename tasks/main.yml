@@ -99,7 +99,7 @@
       --non-interactive
   include_role:
     name: podman_container_systemd
-  when: not letsencyrpt_accounts.stat.exists
+  when: not letsencyrpt_accounts.stat.exists and letsencrypt_domains is defined
 
 - name: create or renew certificate using certbot container
   command:
