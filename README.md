@@ -36,7 +36,7 @@ Example Playbook
 
 The following playbook setups nginx and letsencyrpt containers for ``www.example.com``:
 
-    - name: Create new 389ds container
+    - name: Setup nginx and letsencrypt containers
       hosts: all
       tasks:
         - include_role:
