@@ -1,0 +1,24 @@
+galaxy_info:
+  author: Christian Felder
+  description: Setup nginx containers with letsecnrypt certificates
+  company: l3o.io
+  license: GPL-3.0-or-later
+  min_ansible_version: 2.9
+  platforms:
+    - name: Fedora
+      versions:
+      - 30
+    - name: EL
+      versions:
+      - 8
+  galaxy_tags:
+    - nginx
+    - letsencrypt
+    - certbot
+    - certificates
+    - web
+    - acme
+    - https
+    - containers
+    - podman
+    - libpod
