@@ -20,11 +20,13 @@
   copy:
     src: "config/"
     dest: "{{ nginx_confdir_volume_host_path }}/"
+  with_items: "{{ ['site/'] | union(nginx_static_config | default([])) }}"
 
 - name: copy static site files
   copy:
     src: "site/"
     dest: "{{ nginx_webroot_volume_host_path }}/"
+  with_items: "{{ ['site/'] | union(nginx_static_site | default([])) }}"
 
 - block:
   - name: stat ssl certificates
