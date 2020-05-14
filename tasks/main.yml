@@ -18,13 +18,13 @@
 
 - name: copy static configuration files
   copy:
-    src: "config/"
+    src: "{{ item }}"
     dest: "{{ nginx_confdir_volume_host_path }}/"
-  with_items: "{{ ['site/'] | union(nginx_static_config | default([])) }}"
+  with_items: "{{ ['config/'] | union(nginx_static_config | default([])) }}"
 
 - name: copy static site files
   copy:
-    src: "site/"
+    src: "{{ item }}"
     dest: "{{ nginx_webroot_volume_host_path }}/"
   with_items: "{{ ['site/'] | union(nginx_static_site | default([])) }}"
 
