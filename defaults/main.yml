@@ -16,3 +16,5 @@ letsencrypt_confdir: "/etc/letsencrypt"
 letsencrypt_statedir: "/var/lib/letsencrypt"
 
 podman_network_name: "podman"
+
+skip_intial_index_file: yes

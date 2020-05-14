@@ -48,6 +48,7 @@
     src: "site/index.html.j2"
     dest: "{{ nginx_webroot_volume_host_path }}/{{ item }}/index.html"
   with_items: "{{ nginx_domains }}"
+  when: not skip_intial_index_file
 
 - name: create nginx container
   vars:
