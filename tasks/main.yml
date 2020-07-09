@@ -63,8 +63,16 @@
       -v "{{ nginx_confdir_volume_host_path }}:/etc/nginx/conf.d:ro"
       -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
       -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt:ro"
+      {% if nginx_http_ip is defined %}
+      -p "{{ nginx_http_ip }}:{{ nginx_http_port }}:80"
+      {% else %}
       -p "{{ nginx_http_port }}:80"
+      {% endif %}
+      {% if nginx_http_ip is defined %}
+      -p "{{ nginx_https_ip }}:{{ nginx_https_port}}:443"
+      {% else %}
       -p "{{ nginx_https_port}}:443"
+      {% endif %}
     container_firewall_ports:
       - "{{ nginx_http_port }}/tcp"
       - "{{ nginx_https_port}}/tcp"
@@ -72,7 +80,7 @@
     name: podman_container_systemd
 
 - name: wait for nginx to start
-  wait_for: "port={{ nginx_http_port }} host=localhost delay=2 state=present timeout=60"
+  wait_for: "port={{ nginx_http_port }} host={{ nginx_http_ip | default('localhost') }} delay=2 state=present timeout=60"
   when: container_state is not defined
 
 - name: reload nginx config

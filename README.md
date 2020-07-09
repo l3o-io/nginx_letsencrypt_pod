@@ -13,6 +13,8 @@ Role Variables
 | ``letsencrypt_camail``          | mail address used for requesting certificates                        |
 | ``nginx_container_name``        | ``nginx`` (default)                                                  |
 | ``letsencrypt_container_name``  | ``certbot`` (default)                                                |
+| ``nginx_http_ip``               | host ip address the http port should be bound to (optional)          |
+| ``nginx_https_ip``              | host ip address the https port should be bound to (optional)          |
 | ``nginx_http_port``             | ``8080`` (default)                                                   |
 | ``nginx_https_port``            | ``8443`` (default)                                                   |
 | ``nginx_rootdir``               | ``/tmp/nginx`` (default)                                             |
