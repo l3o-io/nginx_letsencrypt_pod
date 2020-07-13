@@ -16,18 +16,6 @@
     state: directory
   with_items: "{{ nginx_domains }}"
 
-- name: copy static configuration files
-  copy:
-    src: "{{ item }}"
-    dest: "{{ nginx_confdir_volume_host_path }}/"
-  with_items: "{{ ['config/'] | union(nginx_static_config | default([])) }}"
-
-- name: copy static site files
-  copy:
-    src: "{{ item }}"
-    dest: "{{ nginx_webroot_volume_host_path }}/"
-  with_items: "{{ ['site/'] | union(nginx_static_site | default([])) }}"
-
 - block:
   - name: stat ssl certificates
     stat:
@@ -51,6 +39,18 @@
     dest: "{{ nginx_webroot_volume_host_path }}/{{ item }}/index.html"
   with_items: "{{ nginx_domains }}"
   when: not skip_intial_index_file
+
+- name: copy static configuration files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ nginx_confdir_volume_host_path }}/"
+  with_items: "{{ ['config/'] | union(nginx_static_config | default([])) }}"
+
+- name: copy static site files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ nginx_webroot_volume_host_path }}/"
+  with_items: "{{ ['site/'] | union(nginx_static_site | default([])) }}"
 
 - name: create nginx container
   vars:
