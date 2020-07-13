@@ -22,7 +22,8 @@
       path: "{{ letsencrypt_confdir_volume_host_path }}/live/{{ item }}"
     register: ssl_stats
     with_items: "{{ nginx_domains }}"
-  - set_fact:
+  - name: store info for each domain whether a certificate exists
+    set_fact:
       ssl_cert_exists: "{{ ssl_cert_exists | default({}) | combine({item.item: item.stat.exists}) }}"
     with_items: "{{ ssl_stats['results'] }}"
   - debug:
@@ -69,13 +70,13 @@
       -p "{{ nginx_http_port }}:80"
       {% endif %}
       {% if nginx_http_ip is defined %}
-      -p "{{ nginx_https_ip }}:{{ nginx_https_port}}:443"
+      -p "{{ nginx_https_ip }}:{{ nginx_https_port }}:443"
       {% else %}
-      -p "{{ nginx_https_port}}:443"
+      -p "{{ nginx_https_port }}:443"
       {% endif %}
     container_firewall_ports:
       - "{{ nginx_http_port }}/tcp"
-      - "{{ nginx_https_port}}/tcp"
+      - "{{ nginx_https_port }}/tcp"
   include_role:
     name: podman_container_systemd
 
@@ -139,7 +140,8 @@
       path: "{{ letsencrypt_confdir_volume_host_path }}/live/{{ item }}"
     register: ssl_stats
     with_items: "{{ nginx_domains }}"
-  - set_fact:
+  - name: store info for each domain whether a certificate exists
+    set_fact:
       ssl_cert_exists: "{{ ssl_cert_exists | default({}) | combine({item.item: item.stat.exists}) }}"
     with_items: "{{ ssl_stats['results'] }}"
   - debug:
