@@ -52,6 +52,11 @@
       -v "{{ nginx_confdir_volume_host_path }}:/etc/nginx/conf.d:ro"
       -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
       -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt:ro"
+      {% if nginx_extra_volumes is defined %}
+      {% for vol in nginx_extra_volumes %}
+      -v "{{ vol.hostdir }}:{{ vol.containerdir }}"
+      {% endfor %}
+      {% endif %}
       {% if nginx_http_ip is defined %}
       -p "{{ nginx_http_ip }}:{{ nginx_http_port }}:80"
       {% else %}
