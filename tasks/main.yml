@@ -87,45 +87,44 @@
   register: letsencyrpt_accounts
 
 - name: register letsencrypt account in certbot container
-  vars:
-    container_name: "{{ letsencrypt_container_name }}_register"
-    container_state: running
-    container_image: "{{ letsencrypt_container_image }}"
-    container_run_args: >-
-      --rm
-      --network "{{ podman_network_name }}"
-      -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
-      -v "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
-      -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
-    container_cmd_args: >-
+  containers.podman.podman_container:
+    name: "{{ letsencrypt_container_name }}_register"
+    state: started
+    image: "{{ letsencrypt_container_image }}"
+    rm: yes
+    network: "{{ podman_network_name }}"
+    volume:
+      - "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
+      - "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
+      - "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
+    command: >-
       register
-      -m "{{ letsencrypt_camail }}"
+      -m {{ letsencrypt_camail }}
       --agree-tos
       --non-interactive
-  include_role:
-    name: podman_container_systemd
   when: not letsencyrpt_accounts.stat.exists and letsencrypt_domains is defined
 
 - name: create or renew certificate using certbot container
-  command:
-    cmd: >-
-      podman run
-      --rm
-      --network "{{ podman_network_name }}"
-      -v "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
-      -v "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
-      -v "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
-      {{ letsencrypt_container_image }}
+  containers.podman.podman_container:
+    name: "{{ letsencrypt_container_name }}-renew"
+    state: started
+    image: "{{ letsencrypt_container_image }}"
+    rm: yes
+    network: "{{ podman_network_name }}"
+    volume:
+      - "{{ letsencrypt_confdir_volume_host_path }}:/etc/letsencrypt"
+      - "{{ letsencrypt_statedir_volume_host_path }}:/var/lib/letsencrypt"
+      - "{{ nginx_webroot_volume_host_path }}:/usr/share/nginx/html"
+    command: >-
       certonly
       --webroot
       --webroot-path=/usr/share/nginx/html/{{ item }}
-      -d "{{ item }}"
-      -m "{{ letsencrypt_camail }}"
+      -d {{ item }}
+      -m {{ letsencrypt_camail }}
       --agree-tos
       --non-interactive
       --keep-until-expiring
-  with_items: "{{ letsencrypt_domains | default([]) }}"
-  when: container_state is not defined
+  loop: "{{ letsencrypt_domains | default([]) }}"
 
 - block:
   - name: stat ssl certificates (2nd round - post creation)
