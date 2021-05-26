@@ -155,7 +155,7 @@
   copy:
     src: "{{ item }}"
     dest: "{{ nginx_webroot_volume_host_path }}/"
-  with_items: "{{ nginx_static_site | default([])) }}"
+  loop: "{{ nginx_static_site | default([]) }}"
 
 - name: reload nginx config
   command: "podman exec {{ nginx_container_name }} nginx -s reload"
