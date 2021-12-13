@@ -28,10 +28,20 @@
     with_items: "{{ ssl_stats['results'] }}"
   - debug:
       msg: "ssl_cert_exists content: {{ ssl_cert_exists }}"
+  - name: stat domain configuration files
+    stat:
+      path: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
+    register: domconf_stats
+    with_items: "{{ nginx_domains }}"
+  - name: store info for each domain whether a configuration file exists
+    set_fact:
+      dom_conf_exists: "{{ dom_conf_exists | default({}) | combine({item.item: item.stat.exists}) }}"
+    with_items: "{{ domconf_stats['results'] }}"
   - name: create configuration file for each domain
     template:
       src: "config/domain.conf.j2"
       dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
+    when: not dom_conf_exists[item]
     with_items: "{{ nginx_domains }}"
 
 - name: create initial index.html file for each domain
@@ -142,6 +152,7 @@
     template:
       src: "config/domain.conf.j2"
       dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
+    when: not dom_conf_exists[item]
     with_items: "{{ nginx_domains }}"
 
 - name: copy static configuration files
