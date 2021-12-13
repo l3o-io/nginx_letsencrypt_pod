@@ -26,8 +26,6 @@
     set_fact:
       ssl_cert_exists: "{{ ssl_cert_exists | default({}) | combine({item.item: item.stat.exists}) }}"
     with_items: "{{ ssl_stats['results'] }}"
-  - debug:
-      msg: "ssl_cert_exists content: {{ ssl_cert_exists }}"
   - name: stat domain configuration files
     stat:
       path: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
@@ -146,8 +144,6 @@
     set_fact:
       ssl_cert_exists: "{{ ssl_cert_exists | default({}) | combine({item.item: item.stat.exists}) }}"
     with_items: "{{ ssl_stats['results'] }}"
-  - debug:
-      msg: "ssl_cert_exists content: {{ ssl_cert_exists }}"
   - name: create configuration file for each domain (2nd round - post creation)
     template:
       src: "config/domain.conf.j2"
