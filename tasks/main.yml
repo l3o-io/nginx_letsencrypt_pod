@@ -158,12 +158,14 @@
   copy:
     src: "{{ item }}"
     dest: "{{ nginx_confdir_volume_host_path }}/"
+    force: yes
   with_items: "{{ ['config/'] | union(nginx_static_config | default([])) }}"
 
 - name: copy static site files
   copy:
     src: "{{ item }}"
     dest: "{{ nginx_webroot_volume_host_path }}/"
+    force: yes
   loop: "{{ nginx_static_site | default([]) }}"
 
 - name: reload nginx config
