@@ -55,7 +55,8 @@
     systemd_tempdir: "%t"
     container_name: "{{ nginx_container_name }}"
     container_state: running
-    container_image: "{{ nginx_container_image }}"
+    container_image_list:
+      - "{{ nginx_container_image }}"
     container_run_args: >-
       --rm
       --network "{{ podman_network_name }}"
@@ -81,7 +82,7 @@
       - "{{ nginx_http_port }}/tcp"
       - "{{ nginx_https_port }}/tcp"
   include_role:
-    name: podman_container_systemd
+    name: ikke_t.podman_container_systemd
 
 - name: wait for nginx to start
   wait_for: "port={{ nginx_http_port }} host={{ nginx_http_ip | default('localhost') }} delay=2 state=present timeout=60"
