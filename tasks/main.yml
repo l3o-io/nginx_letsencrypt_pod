@@ -49,6 +49,20 @@
   with_items: "{{ nginx_domains }}"
   when: not skip_intial_index_file
 
+- name: copy static configuration files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ nginx_confdir_volume_host_path }}/"
+    force: yes
+  with_items: "{{ ['config/'] | union(nginx_static_config | default([])) }}"
+
+- name: copy static site files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ nginx_webroot_volume_host_path }}/"
+    force: yes
+  loop: "{{ nginx_static_site | default([]) }}"
+
 - name: create nginx container
   vars:
     service_files_dir: /etc/systemd/system
@@ -153,20 +167,6 @@
       dest: "{{ nginx_confdir_volume_host_path }}/{{ item }}.conf"
     when: not dom_conf_exists[item]
     with_items: "{{ nginx_domains }}"
-
-- name: copy static configuration files
-  copy:
-    src: "{{ item }}"
-    dest: "{{ nginx_confdir_volume_host_path }}/"
-    force: yes
-  with_items: "{{ ['config/'] | union(nginx_static_config | default([])) }}"
-
-- name: copy static site files
-  copy:
-    src: "{{ item }}"
-    dest: "{{ nginx_webroot_volume_host_path }}/"
-    force: yes
-  loop: "{{ nginx_static_site | default([]) }}"
 
 - name: reload nginx config
   command: "podman exec {{ nginx_container_name }} nginx -s reload"
